@@ -79,7 +79,7 @@ public class UDPComUI extends JFrame {
 			boolean ok = this.comUnit.getSender().requestAcknowledge(textFieldInputIP.getText(), 
 					Integer.valueOf(textFieldInputPort.getText()), this.comUnit.getReceiver().getPort());
 			if (ok) {
-				this.setEnabled(false);
+				buttonCall.setEnabled(false);
 				buttonHangUp.setEnabled(true);
 			}
 		});
@@ -89,7 +89,7 @@ public class UDPComUI extends JFrame {
 			// TODO REQ QUIT
 			this.comUnit.getReceiverThread().interrupt();
 			this.comUnit.getSenderThread().interrupt();
-			this.setEnabled(false);
+			buttonHangUp.setEnabled(false);
 			buttonCall.setEnabled(true);
 		});
 		inputPanel.add(labelInputIP);
