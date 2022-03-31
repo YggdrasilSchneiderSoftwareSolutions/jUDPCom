@@ -7,23 +7,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.network.udp.UDPInterface;
+import de.network.udp.observer.CommunicationListener;
+import de.network.udp.observer.FinishCommunicationListener;
 import de.network.udp.observer.IncomingCommunicationListener;
 
 public class UDPReceiver extends UDPInterface {
 	
-	private List<IncomingCommunicationListener> listeners = new ArrayList<>();
+	private List<IncomingCommunicationListener> incomingListeners = new ArrayList<>();
+	private List<FinishCommunicationListener> finishListeners = new ArrayList<>();
 	private Speaker speaker;
 
 	public UDPReceiver(int port) {
 		super(port);
 	}
 	
-	public void addListener(IncomingCommunicationListener listener) {
-		listeners.add(listener);
+	public void addListener(CommunicationListener listener) {
+		if (listener instanceof IncomingCommunicationListener)
+			incomingListeners.add((IncomingCommunicationListener) listener);
+		else if (listener instanceof FinishCommunicationListener)
+			finishListeners.add((FinishCommunicationListener) listener);
 	}
 	
 	public void emitIncomingEvent(String host, int port, boolean confirmed) {
-		listeners.forEach(listener -> listener.onIncomingCommunication(host, port, this.port, confirmed));
+		incomingListeners.forEach(listener -> listener.onIncomingCommunication(host, port, this.port, confirmed));
+	}
+	
+	public void emitFinishEvent(String address) {
+		finishListeners.forEach(listener -> listener.onEndCommunication(address));
 	}
 
 	@Override
@@ -65,6 +75,13 @@ public class UDPReceiver extends UDPInterface {
 			// Port des Receiver des neuen Clients extrahieren und an den eigenen Sender emitten zur Aufnahmen der Empfänger
 			int portReceiverOfRequestClient = Integer.valueOf(dataHeader.substring(dataHeader.indexOf('/') + 1, HEADER_SIZE));
 			emitIncomingEvent(host, portReceiverOfRequestClient, true);
+		} else if (dataHeader.startsWith(TEAR_DOWN_HEAD)) { // Anderer Client hat aufgelegt
+			System.out.println(this.port + " : " + dataHeader);
+			String clientAddress = dataHeader.substring(dataHeader.indexOf('/') + 1, HEADER_SIZE);
+			emitFinishEvent(clientAddress);
+			speaker.closeStream();
+			speaker = null;
+			
 		} else {
 			// Auf Lautsprecher ausgeben
 			speaker.outputToSpeaker(data);

@@ -46,7 +46,6 @@ public class UDPSender extends UDPInterface {
 	public void acceptReceiver(String address, int port, int portMyReceiver, boolean confirmed) throws UnknownHostException {
 		InetAddress inetAddress = InetAddress.getByName(address);
 		receivers.put(inetAddress, port);
-		microphone = new Microphone();
 		
 		if (!confirmed) {
 			byte[] resAck = (CONFIRM_ACKNOWLEDGEMENT_HEAD + "/" + portMyReceiver).getBytes();
@@ -55,6 +54,10 @@ public class UDPSender extends UDPInterface {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		if (microphone == null) {
+			microphone = new Microphone();
 		}
 	}
 	
@@ -75,6 +78,44 @@ public class UDPSender extends UDPInterface {
 		}
 		
 		return acknowledged;
+	}
+	
+	public void finishCall(String host, int portReceiver, int portMyReceiver) {
+		sendHangUp(host, portReceiver, portMyReceiver);
+		removeReceiver(host);
+		microphone.closeStream();
+		microphone = null;
+	}
+
+	public Map<InetAddress, Integer> getReceivers() {
+		return receivers;
+	}
+	
+	public boolean removeReceiver(String address) {
+		InetAddress inetAddress;
+		try {
+			inetAddress = InetAddress.getByName(address);
+			receivers.remove(inetAddress);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private boolean sendHangUp(String host, int portReceiver, int portMyReceiver) {
+		byte[] reqHangUp = (TEAR_DOWN_HEAD + "/" + portMyReceiver).getBytes();
+		InetAddress address;
+		try {
+			address = InetAddress.getByName(host);
+			sendDataPacketToReceiver(new DatagramPacket(reqHangUp, reqHangUp.length, address, portReceiver));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
 	}
 
 }

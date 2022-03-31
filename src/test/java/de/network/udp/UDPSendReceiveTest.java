@@ -10,6 +10,9 @@ import javax.sound.sampled.Mixer;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import de.network.udp.receiver.Speaker;
+import de.network.udp.sender.Microphone;
+
 public class UDPSendReceiveTest {
 	
 	@Test
@@ -95,6 +98,28 @@ public class UDPSendReceiveTest {
 				System.out.println("\t-----" + line);
 			}
 		}
+	}
+	
+	@Test
+	public void testMicAndSpeaker() {
+		
+		boolean finished = false;
+		
+		long start = System.currentTimeMillis();
+		
+		Microphone mic = new Microphone();
+		Speaker speaker = new Speaker();
+		
+		while (!finished) {
+			byte[] record = mic.getInputBytes();
+			speaker.outputToSpeaker(record);
+			
+			long now = System.currentTimeMillis();
+			if ((now - start) > 5000) finished = true;
+		}
+		
+		mic.closeStream();
+		speaker.closeStream();
 	}
 
 }

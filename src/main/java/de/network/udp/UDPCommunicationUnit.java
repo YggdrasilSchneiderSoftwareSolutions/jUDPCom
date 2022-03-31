@@ -2,6 +2,7 @@ package de.network.udp;
 
 import java.net.UnknownHostException;
 
+import de.network.udp.observer.FinishCommunicationListener;
 import de.network.udp.observer.IncomingCommunicationListener;
 import de.network.udp.receiver.UDPReceiver;
 import de.network.udp.sender.UDPSender;
@@ -26,6 +27,21 @@ public class UDPCommunicationUnit {
 		}
 	}
 	
+	private static class FinishListener implements FinishCommunicationListener {
+		
+		private UDPSender sender;
+		
+		public FinishListener(UDPSender sender) {
+			this.sender = sender;
+		}
+
+		@Override
+		public void onEndCommunication(String address) {
+			sender.removeReceiver(address);
+		}
+		
+	}
+	
 	private Thread senderThread;
 	private Thread receiverThread;
 	private UDPSender sender;
@@ -40,6 +56,7 @@ public class UDPCommunicationUnit {
 		if (portReceiver >= 0) {
 			receiver = new UDPReceiver(portReceiver);
 			receiver.addListener(new IncomingListener(sender));
+			receiver.addListener(new FinishListener(sender));
 			receiverThread = new Thread(receiver);
 		}
 		

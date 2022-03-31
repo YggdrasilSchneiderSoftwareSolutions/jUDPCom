@@ -39,7 +39,15 @@ public class UDPComUI extends JFrame {
 	
 	private JPanel mainPanel;
 	
+	private JPanel callPanel;
+	
+	private JLabel labelCurrentCall;
+	
 	private UDPCommunicationUnit comUnit;
+	
+	private String lastCallIP;
+	
+	private String lastCallPort;
 	
 	public UDPComUI(UDPCommunicationUnit comUnit) {
 		this.comUnit = comUnit;
@@ -68,7 +76,7 @@ public class UDPComUI extends JFrame {
 		myDataPanel.add(labelMySenderPort);
 		myDataPanel.add(labelMyReceiverPort);
 		
-		// call panel
+		// input panel
 		inputPanel = new JPanel();
 		labelInputIP = new JLabel("Call IP");
 		textFieldInputIP = new JTextField(9);
@@ -76,9 +84,12 @@ public class UDPComUI extends JFrame {
 		textFieldInputPort = new JTextField(4);
 		buttonCall = new JButton("Call");
 		buttonCall.addActionListener(event -> {
-			boolean ok = this.comUnit.getSender().requestAcknowledge(textFieldInputIP.getText(), 
-					Integer.valueOf(textFieldInputPort.getText()), this.comUnit.getReceiver().getPort());
+			lastCallIP = textFieldInputIP.getText();
+			lastCallPort = textFieldInputPort.getText();
+			boolean ok = this.comUnit.getSender().requestAcknowledge(lastCallIP, 
+					Integer.valueOf(lastCallPort), this.comUnit.getReceiver().getPort());
 			if (ok) {
+				labelCurrentCall.setText("Current call: " + lastCallIP + ":" + lastCallPort);
 				buttonCall.setEnabled(false);
 				buttonHangUp.setEnabled(true);
 			}
@@ -86,7 +97,8 @@ public class UDPComUI extends JFrame {
 		buttonHangUp = new JButton("Hang up");
 		buttonHangUp.setEnabled(false);
 		buttonHangUp.addActionListener(event -> {
-			// TODO REQ QUIT
+			this.comUnit.getSender().finishCall(lastCallIP, Integer.parseInt(lastCallPort), 
+					this.comUnit.getReceiver().getPort());
 			this.comUnit.getReceiverThread().interrupt();
 			this.comUnit.getSenderThread().interrupt();
 			buttonHangUp.setEnabled(false);
@@ -99,8 +111,14 @@ public class UDPComUI extends JFrame {
 		inputPanel.add(buttonCall);
 		inputPanel.add(buttonHangUp);
 		
+		// call panel
+		callPanel = new JPanel();
+		labelCurrentCall = new JLabel("");
+		callPanel.add(labelCurrentCall);
+		
 		mainPanel.add(myDataPanel);
 		mainPanel.add(inputPanel);
+		mainPanel.add(callPanel);
 		
 		add(mainPanel);
 		
