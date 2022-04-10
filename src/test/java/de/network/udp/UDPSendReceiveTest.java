@@ -1,6 +1,7 @@
 package de.network.udp;
 
-import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Line;
@@ -10,74 +11,13 @@ import javax.sound.sampled.Mixer;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import de.network.udp.gui.UDPComUI;
 import de.network.udp.receiver.Speaker;
+import de.network.udp.receiver.UDPReceiver;
 import de.network.udp.sender.Microphone;
+import de.network.udp.sender.UDPSender;
 
 public class UDPSendReceiveTest {
-	
-	@Test
-	@Ignore
-	public void testCommunicationUnit() throws InterruptedException, IOException {
-		// Zwei Telefone erstellen
-		UDPCommunicationUnit comUnit1 = new UDPCommunicationUnit(8887, 8888);
-		UDPCommunicationUnit comUnit2 = new UDPCommunicationUnit(9887, 9888);
-		
-		Thread.sleep(2000);
-		// Telefon 1 ruft bei Telefon 2 an und wird berechtigt
-		boolean ok = comUnit1.getSender().requestAcknowledge("127.0.0.1", 9888, comUnit1.getReceiver().port);
-		if (ok) {
-			// Telefon 1 nimmt Telefon 2 in seine Receiver auf -> es wird kommuniziert
-			comUnit1.getSender().acceptReceiver("127.0.0.1", 9888, 8888, true);
-		}
-		
-		Thread.sleep(50);
-		
-		comUnit1.getReceiverThread().interrupt();
-		comUnit1.getSenderThread().interrupt();
-		comUnit2.getReceiverThread().interrupt();
-		comUnit2.getSenderThread().interrupt();
-	}
-	
-	@Test
-	@Ignore
-	public void testCommunicationOnlySenderAndReceiver() throws InterruptedException, IOException {
-		// Nur Sender
-		UDPCommunicationUnit comUnit1 = new UDPCommunicationUnit(8887, -1);
-		// Nur Receiver
-		UDPCommunicationUnit comUnit2 = new UDPCommunicationUnit(-1, 9888);
-		
-		Thread.sleep(2000);
-		// Telefon 1 ruft bei Telefon 2 an und wird berechtigt
-		boolean ok = comUnit1.getSender().requestAcknowledge("127.0.0.1", 9888, 8000);
-		if (ok) {
-			// Telefon 1 nimmt Telefon 2 in seine Receiver auf -> es wird kommuniziert
-			comUnit1.getSender().acceptReceiver("127.0.0.1", 9888, 8888, true);
-		}
-		
-		Thread.sleep(10000);
-		
-		comUnit1.getSenderThread().interrupt();
-		comUnit2.getReceiverThread().interrupt();
-	}
-	
-	@Test
-	@Ignore
-	public void testCommunication() throws InterruptedException {
-		// Zwei Telefone erstellen
-		UDPCommunicationUnit comUnit1 = new UDPCommunicationUnit(8887, 8888);
-		UDPCommunicationUnit comUnit2 = new UDPCommunicationUnit(9887, 9888);
-
-		Thread.sleep(2000);
-		// Telefon 1 ruft bei Telefon 2 an und wird berechtigt
-		boolean ok = comUnit1.getSender().requestAcknowledge("127.0.0.1", 9888, comUnit1.getReceiver().port);
-		
-		Thread.sleep(10000);
-		
-		comUnit1.getReceiverThread().interrupt();
-		comUnit1.getSenderThread().interrupt();
-		comUnit2.getReceiverThread().interrupt();
-		comUnit2.getSenderThread().interrupt();
-	}
 	
 	@Test
 	@Ignore
@@ -101,6 +41,7 @@ public class UDPSendReceiveTest {
 	}
 	
 	@Test
+	@Ignore
 	public void testMicAndSpeaker() {
 		
 		boolean finished = false;
@@ -120,6 +61,42 @@ public class UDPSendReceiveTest {
 		
 		mic.closeStream();
 		speaker.closeStream();
+	}
+	
+	@Test
+	@Ignore
+	public void testNewUnits() throws InterruptedException, UnknownHostException {
+		InetAddress address = InetAddress.getByName("127.0.0.1");
+		
+		UDPReceiver receiver = new UDPReceiver(8888);
+		UDPSender sender = new UDPSender(8887);
+		
+		sender.getReceivers().put(address, Integer.valueOf(8888));
+		
+		Thread t1 = new Thread(receiver);
+		Thread t2 = new Thread(sender);
+		t1.start();
+		t2.start();
+		
+		Thread.sleep(5000);
+		
+		t1.interrupt();
+		t2.interrupt();
+	}
+	
+	@Test
+	public void testWithUiLocal() {
+		UDPCommunicationUnit comUnit1 = new UDPCommunicationUnit(8887, 8888, 
+				8889, 8886);
+		new UDPComUI(comUnit1);
+		
+		UDPCommunicationUnit comUnit2 = new UDPCommunicationUnit(9887, 9888, 
+				9889, 9886);
+		new UDPComUI(comUnit2);
+		
+		while(true) {
+			
+		}
 	}
 
 }

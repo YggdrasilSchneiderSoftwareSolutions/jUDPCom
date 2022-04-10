@@ -1,16 +1,18 @@
 package de.network.udp.receiver;
 
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-public class Speaker {
-	//https://stackoverflow.com/questions/28122097/live-audio-stream-java
-	private AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+import de.network.udp.Device;
+
+//https://stackoverflow.com/questions/28122097/live-audio-stream-java
+public class Speaker extends Device {
+	
 	private SourceDataLine sourceDataLine;
 	
-	public Speaker() {
+	@Override
+	public void startStream() {
 		try {
 			sourceDataLine = AudioSystem.getSourceDataLine(format);
 			sourceDataLine.open(format);
@@ -21,14 +23,15 @@ public class Speaker {
 		}
 	}
 	
-	public void outputToSpeaker(byte[] soundData) {
-		sourceDataLine.write(soundData, 0, soundData.length);
-	}
-	
+	@Override
 	public void closeStream() {
-		sourceDataLine.drain();
+		sourceDataLine.flush();
         sourceDataLine.close();
         System.out.println("Speaker shut down");
+	}
+	
+	public void outputToSpeaker(byte[] soundData) {
+		sourceDataLine.write(soundData, 0, soundData.length);
 	}
 
 }
