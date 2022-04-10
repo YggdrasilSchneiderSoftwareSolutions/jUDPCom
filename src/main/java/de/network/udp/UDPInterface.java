@@ -14,6 +14,7 @@ public abstract class UDPInterface implements Runnable {
 	protected DatagramSocket socket;
 	protected int port;
 	protected volatile boolean running;
+	protected volatile boolean inCall;
 	
 	public UDPInterface(int port) {
 		this.port = port;
